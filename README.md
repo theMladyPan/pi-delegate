@@ -25,14 +25,18 @@ Overrides: `provider`, `model`, `thinking`, `timeoutSeconds`, `maxTurns`, `maxCo
 
 ## Requirements
 
-This extension spawns a child `pi` process with two other extensions loaded for web access and lazy-coding guidance. Install both first:
+This extension spawns a child `pi` process. Two other extensions make the child far more capable — **web access** and **lazy-coding guidance**. They are **optional but strongly advised**:
 
 ```bash
 pi install npm:pi-web-access
 pi install npm:@dietrichgebert/ponytail
 ```
 
-If either is missing, a delegate call fails with an error naming the package to install.
+If either is missing, the delegate call still runs:
+- without `pi-web-access`, web tools are dropped from the child's toolset (no `web_search` / `fetch_content` / etc.), and
+- without `@dietrichgebert/ponytail`, the child gets no lazy-coding system prompt.
+
+A `⚠` advisory line naming the missing package(s) and the `pi install` command is shown in the result (and streamed to the live TUI view) on every call that runs degraded.
 
 ## Install
 
@@ -43,7 +47,7 @@ pi install git:github.com/theMladyPan/pi-delegate
 Or pin a ref:
 
 ```bash
-pi install git:github.com/theMladyPan/pi-delegate@v0.1.0
+pi install git:github.com/theMladyPan/pi-delegate@v0.2.0
 ```
 
 To try without installing:

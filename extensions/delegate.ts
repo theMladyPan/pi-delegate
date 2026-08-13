@@ -62,6 +62,7 @@ interface DelegateDetails {
   changedFiles: string[];
   completedTools: string[];
   stderr?: string;
+  advisory?: string;
 }
 
 const ROLE_CONFIG: Record<Role, { tools: string[]; thinking: string; prompt: string }> = {
@@ -248,23 +249,22 @@ export default function delegateExtension(pi: ExtensionAPI) {
     parameters: DelegateParams,
 
     async execute(toolCallId, params, signal, onUpdate, ctx) {
-      for (const extension of [WEB_EXTENSION, PONYTAIL_EXTENSION]) {
-        if (!existsSync(extension)) {
-          const which = extension === WEB_EXTENSION ? "pi-web-access" : "@dietrichgebert/ponytail";
-          throw new Error(
-            `Required dependency extension not found: ${which}\n` +
-              `Install it first:\n  pi install npm:${which}\n` +
-              `Then retry the delegate call.`,
-          );
-        }
-      }
-
       const role = params.role as Role;
       const config = ROLE_CONFIG[role];
+      const webPresent = existsSync(WEB_EXTENSION);
+      const ponytailPresent = existsSync(PONYTAIL_EXTENSION);
+      const missing: string[] = [];
+      if (!webPresent) missing.push("pi-web-access");
+      if (!ponytailPresent) missing.push("@dietrichgebert/ponytail");
+      const advisory = missing.length
+        ? `Running without ${missing.join(", ")}. Strongly advised: \`pi install npm:${missing.join("`\` and `pi install npm:")}\`. Web access and lazy-coding guidance are unavailable until installed.`
+        : undefined;
+
       const rawCwd = params.cwd?.replace(/^@/, "") ?? ctx.cwd;
       const cwd = isAbsolute(rawCwd) ? resolve(rawCwd) : resolve(ctx.cwd, rawCwd);
       if (!existsSync(cwd) || !statSync(cwd).isDirectory()) throw new Error(`Delegate cwd is not a directory: ${cwd}`);
 
+      const tools = webPresent ? config.tools : config.tools.filter((t) => !WEB_TOOLS.includes(t));
       const thinking = params.thinking ?? config.thinking;
       const args = [
         "--mode",
@@ -272,18 +272,16 @@ export default function delegateExtension(pi: ExtensionAPI) {
         "-p",
         "--no-session",
         "--no-extensions",
-        "--extension",
-        WEB_EXTENSION,
-        "--extension",
-        PONYTAIL_EXTENSION,
         "--tools",
-        config.tools.join(","),
+        tools.join(","),
         "--thinking",
         thinking,
         ctx.isProjectTrusted() && (cwd.startsWith(`${resolve(ctx.cwd)}/`) || cwd === resolve(ctx.cwd))
           ? "--approve"
           : "--no-approve",
       ];
+      if (webPresent) args.push("--extension", WEB_EXTENSION);
+      if (ponytailPresent) args.push("--extension", PONYTAIL_EXTENSION);
 
       if (params.provider) args.push("--provider", params.provider);
       if (params.model) args.push("--model", params.model);
@@ -322,6 +320,7 @@ export default function delegateExtension(pi: ExtensionAPI) {
         changedFiles: [...changedFiles],
         completedTools: [...completedTools],
         ...(stderr.trim() ? { stderr: stderr.trim() } : {}),
+        ...(advisory ? { advisory } : {}),
       });
 
       const flushUpdate = () => {
@@ -466,7 +465,7 @@ export default function delegateExtension(pi: ExtensionAPI) {
               ? `Delegate failed${spawnError ? `: ${spawnError.message}` : ""}. Partial filesystem work may exist.`
               : "Delegate completed.";
       const output = await truncateOutput(
-        [prefix, latestText, status === "completed" ? "" : progress, stderr.trim() ? `stderr:\n${stderr.trim()}` : ""]
+        [prefix, latestText, status === "completed" ? "" : progress, advisory, stderr.trim() ? `stderr:\n${stderr.trim()}` : ""]
           .filter(Boolean)
           .join("\n\n"),
       );
@@ -501,11 +500,13 @@ export default function delegateExtension(pi: ExtensionAPI) {
       const header = `${statusIcon(theme, details.status)} ${theme.fg("toolTitle", theme.bold("Delegate"))} ${theme.fg("accent", details.role)}`;
       const usage = usageLine(details.usage, details.turns);
       const toolLines = details.completedTools.slice(-3).map((t) => theme.fg("muted", "→ ") + theme.fg("toolOutput", t));
+      const advisoryLine = details.advisory ? theme.fg("warning", `⚠ ${details.advisory}`) : "";
 
       if (isPartial || details.status === "running") {
         let text = header;
         if (usage) text += `\n${theme.fg("dim", usage)}`;
         if (toolLines.length) text += `\n${toolLines.join("\n")}`;
+        if (advisoryLine) text += `\n${advisoryLine}`;
         return new Text(text, 0, 0);
       }
 
@@ -514,6 +515,7 @@ export default function delegateExtension(pi: ExtensionAPI) {
         if (details.limit) text += ` ${theme.fg("warning", `[${details.limit} limit]`)}`;
         if (usage) text += `\n${theme.fg("dim", usage)}`;
         if (toolLines.length) text += `\n${toolLines.join("\n")}`;
+        if (advisoryLine) text += `\n${advisoryLine}`;
         return new Text(text, 0, 0);
       }
 
@@ -538,6 +540,10 @@ export default function delegateExtension(pi: ExtensionAPI) {
       if (text) {
         container.addChild(new Spacer(1));
         container.addChild(new Markdown(text, 0, 0, getMarkdownTheme()));
+      }
+      if (advisoryLine) {
+        container.addChild(new Spacer(1));
+        container.addChild(new Text(advisoryLine, 0, 0));
       }
       if (details.stderr) {
         container.addChild(new Spacer(1));
