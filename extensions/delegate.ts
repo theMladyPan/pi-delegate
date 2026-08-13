@@ -504,6 +504,8 @@ export default function delegateExtension(pi: ExtensionAPI) {
 
       if (isPartial || details.status === "running") {
         let text = header;
+        if (details.provider || details.model)
+          text += `\n${theme.fg("muted", `${details.provider ?? ""}${details.model ? ` / ${details.model}` : ""}`.trim())}`;
         if (usage) text += `\n${theme.fg("dim", usage)}`;
         if (toolLines.length) text += `\n${toolLines.join("\n")}`;
         if (advisoryLine) text += `\n${advisoryLine}`;
@@ -513,6 +515,8 @@ export default function delegateExtension(pi: ExtensionAPI) {
       if (!expanded) {
         let text = header;
         if (details.limit) text += ` ${theme.fg("warning", `[${details.limit} limit]`)}`;
+        if (details.provider || details.model)
+          text += `\n${theme.fg("muted", `${details.provider ?? ""}${details.model ? ` / ${details.model}` : ""}`.trim())}`;
         if (usage) text += `\n${theme.fg("dim", usage)}`;
         if (toolLines.length) text += `\n${toolLines.join("\n")}`;
         if (advisoryLine) text += `\n${advisoryLine}`;

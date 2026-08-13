@@ -47,7 +47,7 @@ pi install git:github.com/theMladyPan/pi-delegate
 Or pin a ref:
 
 ```bash
-pi install git:github.com/theMladyPan/pi-delegate@v0.2.0
+pi install git:github.com/theMladyPan/pi-delegate@v0.3.0
 ```
 
 To try without installing:
