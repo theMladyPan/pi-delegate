@@ -12,6 +12,14 @@ A [pi](https://pi.dev) extension that delegates bounded coding tasks to an isola
 
 The parent agent keeps its context window clean while a cheaper model does the work in a separate process. Progress (status, turns taken, token/cost consumption, recent tool calls) streams into the parent's TUI as it happens.
 
+## Screenshots
+
+| Collapsed | Expanded (Ctrl+O) |
+|----------|------------------|
+| ![Collapsed](images/collapsed.png) | ![Expanded](images/expanded.png) |
+
+Collapsed shows a 72-char task preview. Press `Ctrl+O` (`app.tools.expand`) on a delegate tool call to reveal the **full task assignment** the parent sent to the subagent; press again to collapse.
+
 ## Roles
 
 | Role | Tools | Thinking | Purpose |
@@ -47,7 +55,7 @@ pi install git:github.com/theMladyPan/pi-delegate
 Or pin a ref:
 
 ```bash
-pi install git:github.com/theMladyPan/pi-delegate@v0.3.0
+pi install git:github.com/theMladyPan/pi-delegate@v0.3.1
 ```
 
 To try without installing:
