@@ -477,9 +477,11 @@ export default function delegateExtension(pi: ExtensionAPI) {
       };
     },
 
-    renderCall(args, theme, _context) {
+    renderCall(args, theme, context) {
       const text = (args as { task?: string })?.task ?? "";
-      const preview = text.length > 72 ? `${text.slice(0, 72)}...` : text;
+      const expanded = (context as { expanded?: boolean } | undefined)?.expanded ?? false;
+      // Collapsed: 72-char preview. Expanded (Ctrl+O): full task assignment.
+      const preview = expanded ? text : text.length > 72 ? `${text.slice(0, 72)}...` : text;
       let content = theme.fg("toolTitle", theme.bold("delegate ")) + theme.fg("accent", String(args.role ?? "chore"));
       const limits: string[] = [];
       if (args.timeoutSeconds) limits.push(`${args.timeoutSeconds}s`);

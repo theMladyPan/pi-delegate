@@ -61,7 +61,7 @@ pi -e git:github.com/theMladyPan/pi-delegate
 - Spawns `pi --mode json -p --no-session` with a role-scoped system prompt and tool set.
 - Parses the child's JSON event stream (`message_end`, `turn_end`, `tool_execution_start/end`).
 - Streams `onUpdate` to the parent TUI (60ms coalesced) so you see live turns, usage, and tool calls.
-- `renderCall` shows the role + limits + task preview; `renderResult` shows a compact live view (partial) and a full summary (expanded) with files changed, all tools, and the output as Markdown.
+- `renderCall` shows the role + limits + task preview; `Ctrl+O` (expand) shows the full task assignment. `renderResult` shows a compact live view (partial) and a full summary (expanded) with files changed, all tools, and the output as Markdown.
 
 The child's model-visible output is returned to the parent; on failure the parent gets diagnostics.
 
